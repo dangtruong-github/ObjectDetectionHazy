@@ -25,7 +25,7 @@ def TrainYOLO(model_path=None, save_path=None):
 
 
 def EvaluateYOLO(model_path=None):
-    model = GetModel(model_path)
+    model = GetYOLO(model_path)
 
     metrics = model.val()
 
@@ -33,6 +33,6 @@ def EvaluateYOLO(model_path=None):
 
 
 def InferenceYOLO(img, model_path=None):
-    model = GetModel(model_path)
+    model = GetYOLO(model_path)
 
     return model(img)
