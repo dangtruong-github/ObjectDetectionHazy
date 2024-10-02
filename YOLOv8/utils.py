@@ -1,4 +1,6 @@
 from ultralytics import YOLO
+import torch
+import torchvision.transforms as tfs
 
 
 def GetYOLO(path=None):
@@ -35,4 +37,14 @@ def EvaluateYOLO(model_path=None):
 def InferenceYOLO(img, model_path=None):
     model = GetYOLO(model_path)
 
-    return model(img)
+    mean = torch.tensor([0.64, 0.6, 0.58])
+    std = torch.tensor([0.14, 0.15, 0.152])
+
+    transform = tfs.Compose([
+        tfs.Normalize(mean, std)
+    ])
+
+    with torch.no_grad():
+        bb = model(transform(img))
+
+    return bb[0]

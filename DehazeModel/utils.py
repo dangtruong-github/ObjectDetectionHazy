@@ -1,17 +1,19 @@
 import torch
+import torch.nn as nn
+import torchvision.transforms as tfs
 
-from FFANet import FFA
+from .FFANet import FFA
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def GetFFA(path=None):
     model = FFA(gps=3, blocks=19)
+    model = nn.DataParallel(model)
 
     if path is None:
-        path = "./DehazeModel/pretrained_models/ots_train_ffa_3_19.pk"
+        path = "./DehazeModel/trained_models/ffa_net.pk"
     
-
     checkpoint = torch.load(path, map_location=device)
     model.load_state_dict(checkpoint['model'])
 
@@ -78,4 +80,24 @@ def EvaluateFFA(model_path=None, test_loader=None):
 def InferenceFFA(img, model_path=None):
     model = GetFFA(model_path)
 
-    return model(img)
+    mean = torch.tensor([0.64, 0.6, 0.58])
+    std = torch.tensor([0.14, 0.15, 0.152])
+
+    transform = tfs.Compose([
+        tfs.Normalize(mean, std)
+    ])
+
+    img_norm = transform(img)
+
+    print(img_norm.shape)
+
+    with torch.no_grad():
+        img_pred = model(img_norm)
+
+    transform_unnorm = tfs.Compose([
+        tfs.Normalize((-mean / std), (1.0 / std)),
+    ])
+
+    img_pred_unnorm = transform_unnorm(img_pred.clamp(0,1))
+
+    return img_pred_unnorm
